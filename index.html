@@ -3,89 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School RFID Attendance V3.1 (With Gender)</title>
+    <title>School RFID Attendance Pro</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; background-color: #f0f2f5; }
-        .container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        h1, h2 { color: #2c3e50; text-align: center; margin-bottom: 1.5rem; }
+        :root {
+            --primary: #4CAF50;
+            --secondary: #2196F3;
+            --accent: #ff9800;
+            --danger: #f44336;
+            --bg: #f0f2f5;
+        }
+
+        body { font-family: 'Segoe UI', system-ui, sans-serif; max-width: 1000px; margin: 2rem auto; padding: 0 1rem; background-color: var(--bg); color: #333; }
+        .container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 25px; }
         
-        /* Input Styling */
-        .form-group { margin-bottom: 10px; }
-        input[type="text"], select, input[type="file"] { width: 100%; padding: 12px; margin: 5px 0; border: 2px solid #e1e4e8; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
-        input[type="text"]:focus, select:focus { border-color: #4CAF50; outline: none; }
+        h1, h2 { color: #2c3e50; text-align: center; margin-top: 0; }
         
-        button { width: 100%; padding: 14px; background-color: #4CAF50; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; transition: background 0.2s; }
-        button:hover { background-color: #45a049; }
+        /* Inputs & Grid */
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        input, select { width: 100%; padding: 12px; border: 2px solid #e1e4e8; border-radius: 8px; box-sizing: border-box; font-size: 15px; transition: border 0.3s; }
+        input:focus { border-color: var(--primary); outline: none; }
         
-        /* Status Messages */
-        #status { margin-top: 1rem; padding: 15px; border-radius: 6px; text-align: center; display: none; font-weight: bold; }
-        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        button { padding: 14px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: transform 0.1s, opacity 0.2s; }
+        button:active { transform: scale(0.98); }
+        .btn-save { background: var(--primary); color: white; width: 100%; }
+        .btn-edit { background: var(--secondary); color: white; padding: 5px 10px; font-size: 12px; }
+
+        /* Status & Highlights */
+        #status { margin-top: 1rem; padding: 15px; border-radius: 8px; text-align: center; display: none; animation: fadeIn 0.3s; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+
+        @keyframes highlightRow {
+            0% { background-color: #fff9c4; }
+            100% { background-color: transparent; }
+        }
+        .new-entry { animation: highlightRow 3s ease-out; }
 
         /* Tables */
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.95rem; }
-        th, td { text-align: left; padding: 15px; border-bottom: 1px solid #eee; vertical-align: middle; }
-        th { background-color: #4CAF50; color: white; border-radius: 6px 6px 0 0; }
-        tr:last-child td { border-bottom: none; }
-        
-        /* Profile Image Styles */
-        .profile-pic { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #ddd; }
-        .no-pic { width: 50px; height: 50px; border-radius: 50%; background: #eee; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #999; }
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #edf2f7; }
+        th { background: #f8fafc; color: #64748b; font-size: 0.85rem; text-transform: uppercase; }
 
-        /* Admin Section Style */
-        .admin-box { border: 2px dashed #cbd5e0; background-color: #f8fafc; }
-        .admin-title { color: #64748b; font-size: 0.85em; text-transform: uppercase; letter-spacing: 1.5px; font-weight: bold; margin-bottom: 15px; }
+        .profile-pic { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .no-pic { width: 45px; height: 45px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; color: #94a3b8; }
         
-        /* Grid for Form */
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        /* Make Name take full width, Gender and Grade take half */
-        .full-width { grid-column: span 2; }
-        
-        @media (max-width: 600px) { 
-            .form-grid { grid-template-columns: 1fr; } 
-            .full-width { grid-column: span 1; }
-        }
+        .badge { padding: 4px 8px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
+        .badge-male { background: #e3f2fd; color: #1976d2; }
+        .badge-female { background: #fce4ec; color: #c2185b; }
+        .badge-other { background: #f3e5f5; color: #7b1fa2; }
+
+        .admin-section { border-top: 4px solid var(--secondary); }
+        .edit-mode-active { border: 2px solid var(--secondary) !important; background: #e3f2fd; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🏫 Daily Attendance Check-in</h1>
-    
-    <p style="text-align:center; color:#666;">Click the box below and scan your card.</p>
-    <input type="text" id="attendanceInput" placeholder="Scan RFID tag here..." autofocus autocomplete="off">
-    
+    <h1>🏫 Attendance Terminal</h1>
+    <div style="max-width: 400px; margin: 0 auto;">
+        <input type="text" id="attendanceInput" placeholder="Scan Student RFID Tag..." autofocus>
+    </div>
     <div id="status"></div>
 
-    <h3>🕒 Today's Live Log</h3>
-    <table id="attendanceTable">
-        <thead>
-            <tr>
-                <th>Photo</th>
-                <th>Time</th>
-                <th>Name</th>
-                <th>Gender</th> <th>Grade</th>
-                <th>ID</th>
-            </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
+    <h3>🕒 Live Activity Log</h3>
+    <div class="table-container">
+        <table id="attendanceTable">
+            <thead>
+                <tr>
+                    <th>Photo</th>
+                    <th>Time</th>
+                    <th>Name</th>
+                    <th>Grade</th>
+                    <th>Gender</th>
+                    <th>Tag ID</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
 </div>
 
-<div class="container admin-box">
-    <div class="admin-title">Teacher Control Panel</div>
-    <h2>➕ Register New Student</h2>
+<div class="container admin-section">
+    <h2 id="formTitle">➕ Register / Edit Student</h2>
     
     <div class="form-grid">
-        <input type="text" id="regName" placeholder="Full Name (e.g. Somchai)" class="full-width">
-        
-        <select id="regGender">
-            <option value="" disabled selected>Select Gender</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-        </select>
-
+        <input type="text" id="regName" placeholder="Full Name">
         <select id="regGrade">
             <option value="" disabled selected>Select Grade</option>
             <option value="Grade 1">Grade 1</option>
@@ -96,22 +99,57 @@
             <option value="Grade 6">Grade 6</option>
             <option value="Teacher">Teacher</option>
         </select>
+        <select id="regGender">
+            <option value="" disabled selected>Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+        </select>
     </div>
 
-    <label style="display:block; margin-top:10px; font-size:0.9em; color:#555;">Profile Photo:</label>
-    <input type="file" id="regPhoto" accept="image/*">
-
-    <input type="text" id="regTag" placeholder="Click here & Scan Card to Register..." style="background-color: #fffde7;">
+    <div class="form-grid">
+        <div>
+            <label style="font-size: 0.8rem; color: #666;">Profile Photo (Max 500KB)</label>
+            <input type="file" id="regPhoto" accept="image/*">
+        </div>
+        <div>
+            <label style="font-size: 0.8rem; color: #666;">Tag ID (Scan Card)</label>
+            <input type="text" id="regTag" placeholder="Scan Card...">
+        </div>
+    </div>
     
-    <button onclick="registerStudent()">Save Student Profile</button>
+    <div style="display: flex; gap: 10px;">
+        <button onclick="saveStudent()" class="btn-save" id="saveBtn">Save Student Profile</button>
+        <button onclick="resetForm()" id="cancelBtn" style="display:none; background:#94a3b8; color:white;">Cancel</button>
+    </div>
+
+    <hr style="margin: 2rem 0; border: 0; border-top: 1px solid #eee;">
+    
+    <h3>👥 Student Directory</h3>
+    <div class="table-container">
+        <table id="directoryTable">
+            <thead>
+                <tr>
+                    <th>Photo</th>
+                    <th>Name</th>
+                    <th>Grade</th>
+                    <th>Gender</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
 </div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getFirestore, collection, addDoc, setDoc, doc, onSnapshot, query, orderBy, limit, serverTimestamp } 
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, setDoc, doc, onSnapshot, query, orderBy, limit, serverTimestamp } 
     from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
- const firebaseConfig = {
+    // --- CONFIG ---
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
   apiKey: "AIzaSyDgwyll9Y2nux79Z1wDWZfb5sGb8stlmhI",
   authDomain: "student-rfid-attendance-7d75b.firebaseapp.com",
   projectId: "student-rfid-attendance-7d75b",
@@ -120,166 +158,150 @@
   appId: "1:533099183026:web:99d56dedd386fb3fdc02ab",
   measurementId: "G-NG593ZZZTM"
 };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    let studentDirectory = {};
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+    // --- UTILS ---
+    const toBase64 = file => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
 
-  // --- 1. HELPER: CONVERT IMAGE TO BASE64 ---
-  const toBase64 = file => new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = error => reject(error);
-  });
+    // --- SYNC STUDENT DIRECTORY ---
+    onSnapshot(collection(db, "students"), (snapshot) => {
+        const directoryBody = document.querySelector('#directoryTable tbody');
+        directoryBody.innerHTML = '';
+        
+        snapshot.forEach((doc) => {
+            const d = doc.data();
+            const id = doc.id;
+            studentDirectory[id] = { ...d, id };
 
-  // --- 2. STUDENT DIRECTORY (The "Phonebook") ---
-  let studentDirectory = {}; 
+            const row = `<tr>
+                <td>${d.photo ? `<img src="${d.photo}" class="profile-pic">` : `<div class="no-pic">?</div>`}</td>
+                <td><strong>${d.name}</strong></td>
+                <td>${d.grade}</td>
+                <td><span class="badge badge-${d.gender?.toLowerCase()}">${d.gender || 'N/A'}</span></td>
+                <td><button class="btn-edit" onclick="editStudent('${id}')">Edit</button></td>
+            </tr>`;
+            directoryBody.innerHTML += row;
+        });
+    });
 
-  onSnapshot(collection(db, "students"), (snapshot) => {
-      snapshot.forEach((doc) => {
-          const d = doc.data();
-          studentDirectory[doc.id] = {
-              name: d.name,
-              grade: d.grade || "N/A",
-              gender: d.gender || "-", // NEW: Load gender
-              photo: d.photo || null 
-          };
-      });
-      console.log("Directory updated:", Object.keys(studentDirectory).length + " students loaded.");
-  });
+    // --- REGISTRATION & EDITING ---
+    window.saveStudent = async function() {
+        const name = document.getElementById('regName').value.trim();
+        const grade = document.getElementById('regGrade').value;
+        const gender = document.getElementById('regGender').value;
+        const tagId = document.getElementById('regTag').value.trim();
+        const photoFile = document.getElementById('regPhoto').files[0];
 
-  // --- 3. REGISTRATION LOGIC ---
-  window.registerStudent = async function() {
-      const name = document.getElementById('regName').value.trim();
-      const grade = document.getElementById('regGrade').value;
-      const gender = document.getElementById('regGender').value; // NEW: Get gender
-      const tagId = document.getElementById('regTag').value.trim();
-      const photoFile = document.getElementById('regPhoto').files[0];
+        if (!name || !tagId || !grade || !gender) {
+            alert("Please fill all fields!");
+            return;
+        }
 
-      // NEW: Added gender check
-      if (!name || !tagId || !grade || !gender) {
-          alert("Please fill in Name, Gender, Grade, and Scan a Tag!");
-          return;
-      }
+        let photoBase64 = studentDirectory[tagId]?.photo || null;
+        if (photoFile) {
+            if (photoFile.size > 500 * 1024) return alert("Image too large (>500KB)");
+            photoBase64 = await toBase64(photoFile);
+        }
 
-      if (photoFile && photoFile.size > 500 * 1024) {
-          alert("Photo is too large! Please use a smaller image (under 500KB).");
-          return;
-      }
+        try {
+            await setDoc(doc(db, "students", tagId), {
+                name, grade, gender, photo: photoBase64, updatedAt: serverTimestamp()
+            }, { merge: true });
+            
+            alert("Student Profile Saved!");
+            resetForm();
+        } catch (e) { alert("Error saving student."); }
+    };
 
-      let photoBase64 = null;
-      if (photoFile) {
-          try {
-              photoBase64 = await toBase64(photoFile);
-          } catch(e) {
-              console.error("Error processing image", e);
-              alert("Error processing image file.");
-              return;
-          }
-      }
+    window.editStudent = function(id) {
+        const s = studentDirectory[id];
+        document.getElementById('regName').value = s.name;
+        document.getElementById('regGrade').value = s.grade;
+        document.getElementById('regGender').value = s.gender;
+        document.getElementById('regTag').value = s.id;
+        document.getElementById('regTag').readOnly = true; // Don't change ID while editing
+        document.getElementById('regTag').classList.add('edit-mode-active');
+        
+        document.getElementById('formTitle').innerText = "📝 Edit Student Mode";
+        document.getElementById('saveBtn').innerText = "Update Profile";
+        document.getElementById('cancelBtn').style.display = "block";
+        window.scrollTo(0, document.body.scrollHeight);
+    };
 
-      try {
-          await setDoc(doc(db, "students", tagId), {
-              name: name,
-              grade: grade,
-              gender: gender, // NEW: Save gender
-              photo: photoBase64, 
-              registeredAt: serverTimestamp()
-          });
-          
-          alert(`✅ Success! ${name} (${gender}, ${grade}) registered.`);
-          
-          // Clear inputs
-          document.getElementById('regName').value = '';
-          document.getElementById('regGrade').value = '';
-          document.getElementById('regGender').value = ''; // NEW: Clear gender
-          document.getElementById('regTag').value = '';
-          document.getElementById('regPhoto').value = ''; 
-      } catch (e) {
-          console.error("Error: ", e);
-          alert("❌ Error registering student.");
-      }
-  }
+    window.resetForm = function() {
+        document.getElementById('regName').value = '';
+        document.getElementById('regGrade').value = '';
+        document.getElementById('regGender').value = '';
+        document.getElementById('regTag').value = '';
+        document.getElementById('regTag').readOnly = false;
+        document.getElementById('regTag').classList.remove('edit-mode-active');
+        document.getElementById('regPhoto').value = '';
+        document.getElementById('formTitle').innerText = "➕ Register New Student";
+        document.getElementById('saveBtn').innerText = "Save Student Profile";
+        document.getElementById('cancelBtn').style.display = "none";
+    };
 
-  // --- 4. ATTENDANCE LOGIC ---
-  const attendanceInput = document.getElementById('attendanceInput');
-  const statusDiv = document.getElementById('status');
+    // --- ATTENDANCE ---
+    const attendanceInput = document.getElementById('attendanceInput');
+    attendanceInput.addEventListener('keypress', async (e) => {
+        if (e.key === 'Enter') {
+            const id = attendanceInput.value.trim();
+            if (id) {
+                await markAttendance(id);
+                attendanceInput.value = '';
+            }
+        }
+    });
 
-  attendanceInput.addEventListener('keypress', async (e) => {
-      if (e.key === 'Enter') {
-          const tagId = attendanceInput.value.trim();
-          if (tagId) {
-              await markAttendance(tagId);
-              attendanceInput.value = ''; 
-          }
-      }
-  });
+    async function markAttendance(id) {
+        const s = studentDirectory[id];
+        const statusDiv = document.getElementById('status');
 
-  async function markAttendance(id) {
-      const student = studentDirectory[id];
-      
-      const studentName = student ? student.name : "Unknown Student";
-      const studentGrade = student ? student.grade : "--";
-      const studentGender = student ? student.gender : "-"; // NEW
-      const studentPhoto = student ? student.photo : null;
+        try {
+            await addDoc(collection(db, "attendance"), {
+                tag_id: id,
+                student_name: s ? s.name : "Unknown",
+                student_grade: s ? s.grade : "N/A",
+                student_gender: s ? s.gender : "N/A",
+                student_photo: s ? s.photo : null,
+                timestamp: serverTimestamp()
+            });
 
-      try {
-          await addDoc(collection(db, "attendance"), {
-              tag_id: id,
-              student_name: studentName,
-              student_grade: studentGrade,
-              student_gender: studentGender, // NEW: Log gender to history
-              student_photo: studentPhoto, 
-              timestamp: serverTimestamp()
-          });
-          
-          if(student) {
-              showStatus(`✅ Welcome, ${studentName}!`, "success");
-          } else {
-              showStatus(`⚠️ Unregistered Tag: ${id}`, "error");
-          }
-      } catch (e) {
-          console.error(e);
-          showStatus("❌ System Error.", "error");
-      }
-  }
+            statusDiv.textContent = s ? `✅ Welcome, ${s.name}!` : `⚠️ Unknown Tag: ${id}`;
+            statusDiv.className = s ? "success" : "error";
+            statusDiv.style.display = 'block';
+            setTimeout(() => statusDiv.style.display = 'none', 3000);
+        } catch (e) { console.error(e); }
+    }
 
-  function showStatus(msg, type) {
-      statusDiv.textContent = msg;
-      statusDiv.className = type;
-      statusDiv.style.display = 'block';
-      setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
-  }
-
-  // --- 5. SHOW TABLE ---
-  const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(10));
-  
-  onSnapshot(q, (snapshot) => {
-      const tbody = document.querySelector('#attendanceTable tbody');
-      tbody.innerHTML = ''; 
-      
-      snapshot.forEach((doc) => {
-          const data = doc.data();
-          let dateStr = "Just now";
-          if (data.timestamp) dateStr = data.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-
-          let imgHtml = `<div class="no-pic">?</div>`;
-          if (data.student_photo) {
-              imgHtml = `<img src="${data.student_photo}" class="profile-pic">`;
-          }
-
-          // NEW: Added Gender Cell
-          const row = `<tr>
-              <td>${imgHtml}</td>
-              <td>${dateStr}</td>
-              <td style="font-weight:bold; color:#333;">${data.student_name || "Unknown"}</td>
-              <td style="color:#555;">${data.student_gender || "-"}</td>
-              <td><span style="background:#e8f5e9; padding:4px 8px; border-radius:10px; font-size:0.85em; color:#2e7d32;">${data.student_grade || "N/A"}</span></td>
-              <td style="color:#999; font-size:0.85em;">${data.tag_id}</td>
-          </tr>`;
-          tbody.innerHTML += row;
-      });
-  });
+    // --- LIVE LOG UI ---
+    const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(10));
+    onSnapshot(q, (snapshot) => {
+        const tbody = document.querySelector('#attendanceTable tbody');
+        tbody.innerHTML = '';
+        
+        snapshot.docs.forEach((doc, index) => {
+            const d = doc.data();
+            const time = d.timestamp ? d.timestamp.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "---";
+            
+            const row = `<tr class="${index === 0 ? 'new-entry' : ''}">
+                <td>${d.student_photo ? `<img src="${d.student_photo}" class="profile-pic">` : `<div class="no-pic">?</div>`}</td>
+                <td>${time}</td>
+                <td><strong>${d.student_name}</strong></td>
+                <td>${d.student_grade}</td>
+                <td><span class="badge badge-${d.student_gender?.toLowerCase()}">${d.student_gender || 'N/A'}</span></td>
+                <td style="font-family: monospace; font-size: 0.8em; color: #999;">${d.tag_id}</td>
+            </tr>`;
+            tbody.innerHTML += row;
+        });
+    });
 </script>
 
 </body>
