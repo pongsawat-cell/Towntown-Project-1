@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School RFID Attendance V3</title>
+    <title>School RFID Attendance V3.1 (With Gender)</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; background-color: #f0f2f5; }
         .container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
@@ -38,7 +38,13 @@
         
         /* Grid for Form */
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+        /* Make Name take full width, Gender and Grade take half */
+        .full-width { grid-column: span 2; }
+        
+        @media (max-width: 600px) { 
+            .form-grid { grid-template-columns: 1fr; } 
+            .full-width { grid-column: span 1; }
+        }
     </style>
 </head>
 <body>
@@ -58,12 +64,12 @@
                 <th>Photo</th>
                 <th>Time</th>
                 <th>Name</th>
-                <th>Grade</th>
+                <th>Gender</th> <th>Grade</th>
                 <th>ID</th>
             </tr>
         </thead>
         <tbody>
-            </tbody>
+        </tbody>
     </table>
 </div>
 
@@ -72,7 +78,14 @@
     <h2>➕ Register New Student</h2>
     
     <div class="form-grid">
-        <input type="text" id="regName" placeholder="Full Name (e.g. Somchai)">
+        <input type="text" id="regName" placeholder="Full Name (e.g. Somchai)" class="full-width">
+        
+        <select id="regGender">
+            <option value="" disabled selected>Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+        </select>
+
         <select id="regGrade">
             <option value="" disabled selected>Select Grade</option>
             <option value="Grade 1">Grade 1</option>
@@ -98,8 +111,7 @@
   import { getFirestore, collection, addDoc, setDoc, doc, onSnapshot, query, orderBy, limit, serverTimestamp } 
     from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
- // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
+ const firebaseConfig = {
   apiKey: "AIzaSyDgwyll9Y2nux79Z1wDWZfb5sGb8stlmhI",
   authDomain: "student-rfid-attendance-7d75b.firebaseapp.com",
   projectId: "student-rfid-attendance-7d75b",
@@ -108,7 +120,6 @@ const firebaseConfig = {
   appId: "1:533099183026:web:99d56dedd386fb3fdc02ab",
   measurementId: "G-NG593ZZZTM"
 };
-  // ----------------------------------------
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
@@ -122,7 +133,6 @@ const firebaseConfig = {
   });
 
   // --- 2. STUDENT DIRECTORY (The "Phonebook") ---
-  // Now stores Name, Grade, AND Photo
   let studentDirectory = {}; 
 
   onSnapshot(collection(db, "students"), (snapshot) => {
@@ -131,7 +141,8 @@ const firebaseConfig = {
           studentDirectory[doc.id] = {
               name: d.name,
               grade: d.grade || "N/A",
-              photo: d.photo || null // Base64 string
+              gender: d.gender || "-", // NEW: Load gender
+              photo: d.photo || null 
           };
       });
       console.log("Directory updated:", Object.keys(studentDirectory).length + " students loaded.");
@@ -141,15 +152,16 @@ const firebaseConfig = {
   window.registerStudent = async function() {
       const name = document.getElementById('regName').value.trim();
       const grade = document.getElementById('regGrade').value;
+      const gender = document.getElementById('regGender').value; // NEW: Get gender
       const tagId = document.getElementById('regTag').value.trim();
       const photoFile = document.getElementById('regPhoto').files[0];
 
-      if (!name || !tagId || !grade) {
-          alert("Please fill in Name, Grade, and Scan a Tag!");
+      // NEW: Added gender check
+      if (!name || !tagId || !grade || !gender) {
+          alert("Please fill in Name, Gender, Grade, and Scan a Tag!");
           return;
       }
 
-      // Check if file is too big (Optional safety check: Limit to 500KB)
       if (photoFile && photoFile.size > 500 * 1024) {
           alert("Photo is too large! Please use a smaller image (under 500KB).");
           return;
@@ -167,20 +179,22 @@ const firebaseConfig = {
       }
 
       try {
-          // Save all details to 'students' collection
           await setDoc(doc(db, "students", tagId), {
               name: name,
               grade: grade,
-              photo: photoBase64, // Storing the image string directly
+              gender: gender, // NEW: Save gender
+              photo: photoBase64, 
               registeredAt: serverTimestamp()
           });
           
-          alert(`✅ Success! ${name} (${grade}) registered.`);
+          alert(`✅ Success! ${name} (${gender}, ${grade}) registered.`);
+          
           // Clear inputs
           document.getElementById('regName').value = '';
           document.getElementById('regGrade').value = '';
+          document.getElementById('regGender').value = ''; // NEW: Clear gender
           document.getElementById('regTag').value = '';
-          document.getElementById('regPhoto').value = ''; // Reset file input
+          document.getElementById('regPhoto').value = ''; 
       } catch (e) {
           console.error("Error: ", e);
           alert("❌ Error registering student.");
@@ -202,11 +216,11 @@ const firebaseConfig = {
   });
 
   async function markAttendance(id) {
-      // Look up student details
       const student = studentDirectory[id];
       
       const studentName = student ? student.name : "Unknown Student";
       const studentGrade = student ? student.grade : "--";
+      const studentGender = student ? student.gender : "-"; // NEW
       const studentPhoto = student ? student.photo : null;
 
       try {
@@ -214,7 +228,8 @@ const firebaseConfig = {
               tag_id: id,
               student_name: studentName,
               student_grade: studentGrade,
-              student_photo: studentPhoto, // We snapshot the photo so logs keep working even if profile changes
+              student_gender: studentGender, // NEW: Log gender to history
+              student_photo: studentPhoto, 
               timestamp: serverTimestamp()
           });
           
@@ -248,16 +263,17 @@ const firebaseConfig = {
           let dateStr = "Just now";
           if (data.timestamp) dateStr = data.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
-          // Handle Photo Logic
           let imgHtml = `<div class="no-pic">?</div>`;
           if (data.student_photo) {
               imgHtml = `<img src="${data.student_photo}" class="profile-pic">`;
           }
 
+          // NEW: Added Gender Cell
           const row = `<tr>
               <td>${imgHtml}</td>
               <td>${dateStr}</td>
               <td style="font-weight:bold; color:#333;">${data.student_name || "Unknown"}</td>
+              <td style="color:#555;">${data.student_gender || "-"}</td>
               <td><span style="background:#e8f5e9; padding:4px 8px; border-radius:10px; font-size:0.85em; color:#2e7d32;">${data.student_grade || "N/A"}</span></td>
               <td style="color:#999; font-size:0.85em;">${data.tag_id}</td>
           </tr>`;
