@@ -246,4 +246,25 @@ const firebaseConfig = {
       snapshot.forEach((doc) => {
           const data = doc.data();
           let dateStr = "Just now";
-          if (data.timestamp) dateStr = data.timestamp.toDate().toLocaleT
+          if (data.timestamp) dateStr = data.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+          // Handle Photo Logic
+          let imgHtml = `<div class="no-pic">?</div>`;
+          if (data.student_photo) {
+              imgHtml = `<img src="${data.student_photo}" class="profile-pic">`;
+          }
+
+          const row = `<tr>
+              <td>${imgHtml}</td>
+              <td>${dateStr}</td>
+              <td style="font-weight:bold; color:#333;">${data.student_name || "Unknown"}</td>
+              <td><span style="background:#e8f5e9; padding:4px 8px; border-radius:10px; font-size:0.85em; color:#2e7d32;">${data.student_grade || "N/A"}</span></td>
+              <td style="color:#999; font-size:0.85em;">${data.tag_id}</td>
+          </tr>`;
+          tbody.innerHTML += row;
+      });
+  });
+</script>
+
+</body>
+</html>
